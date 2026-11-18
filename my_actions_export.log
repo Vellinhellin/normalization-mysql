@@ -1,0 +1,84 @@
+event_time	command_type	argument
+2026-11-18 12:05:08.155379	Query	CREATE TABLE sales_unnormalized_2 (\n    report_id     INT,\n    report_date   DATE,\n    customer_id   INT,\n    customer_name VARCHAR(100),\n    product_id    INT,\n    product_name  VARCHAR(100),\n    price         DECIMAL(10,2),\n    quantity      INT\n)
+2026-11-18 12:05:08.190754	Query	INSERT INTO sales_unnormalized_2 VALUES\n(1101, '2026-03-05', 12, 'Дания',   101, 'Дыни',      800, 1100),\n(1101, '2026-03-05', 12, 'Дания',   102, 'Клубника',  150,  300),\n(1102, '2026-03-07', 23, 'Испания', 103, 'Яблоки',    120, 1700),\n(1103, '2026-03-08', 25, 'Албания', 104, 'Лимоны',    200,  500),\n(1104, '2026-03-10', 12, 'Дания',   101, 'Дыни',      800, 2500),\n(1105, '2026-03-12', 25, 'Албания', 103, 'Яблоки',    120, 2000),\n(1105, '2026-03-12', 25, 'Албания', 104, 'Лимоны',    200,  700)
+2026-11-18 12:05:09.067044	Query	SELECT * FROM sales_unnormalized_2
+2026-11-18 12:05:30.482712	Query	UPDATE sales_unnormalized_2 SET customer_name = 'Дания (обновлено)' WHERE report_id = 1101 AND product_id = 101
+2026-11-18 12:05:31.417031	Query	SELECT * FROM sales_unnormalized_2 WHERE customer_id = 12
+2026-11-18 12:05:51.699039	Query	DELETE FROM sales_unnormalized_2
+2026-11-18 12:05:52.589324	Query	INSERT INTO sales_unnormalized_2 VALUES\n(1101, '2026-03-05', 12, 'Дания',   101, 'Дыни',      800, 1100),\n(1101, '2026-03-05', 12, 'Дания',   102, 'Клубника',  150,  300),\n(1102, '2026-03-07', 23, 'Испания', 103, 'Яблоки',    120, 1700),\n(1103, '2026-03-08', 25, 'Албания', 104, 'Лимоны',    200,  500),\n(1104, '2026-03-10', 12, 'Дания',   101, 'Дыни',      800, 2500),\n(1105, '2026-03-12', 25, 'Албания', 103, 'Яблоки',    120, 2000),\n(1105, '2026-03-12', 25, 'Албания', 104, 'Лимоны',    200,  700)
+2026-11-18 12:06:02.419424	Query	CREATE TABLE customers (\n    customer_id INT PRIMARY KEY,\n    customer_name VARCHAR(100) NOT NULL\n) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+2026-11-18 12:06:02.444341	Query	CREATE TABLE products (\n    product_id INT PRIMARY KEY,\n    product_name VARCHAR(100) NOT NULL,\n    price DECIMAL(10,2) NOT NULL\n) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+2026-11-18 12:06:02.475224	Query	CREATE TABLE reports (\n    report_id INT PRIMARY KEY,\n    report_date DATE NOT NULL,\n    customer_id INT NOT NULL,\n    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)\n) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+2026-11-18 12:06:03.432580	Query	CREATE TABLE report_items (\n    report_id INT NOT NULL,\n    product_id INT NOT NULL,\n    quantity INT NOT NULL,\n    PRIMARY KEY (report_id, product_id),\n    FOREIGN KEY (report_id) REFERENCES reports(report_id),\n    FOREIGN KEY (product_id) REFERENCES products(product_id)\n) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+2026-11-18 12:06:09.410309	Query	INSERT INTO customers (customer_id, customer_name)\nSELECT DISTINCT customer_id, customer_name FROM sales_unnormalized_2
+2026-11-18 12:06:09.416373	Query	INSERT INTO products (product_id, product_name, price)\nSELECT DISTINCT product_id, product_name, price FROM sales_unnormalized_2
+2026-11-18 12:06:09.424725	Query	INSERT INTO reports (report_id, report_date, customer_id)\nSELECT DISTINCT report_id, report_date, customer_id FROM sales_unnormalized_2
+2026-11-18 12:06:10.256413	Query	INSERT INTO report_items (report_id, product_id, quantity)\nSELECT report_id, product_id, quantity FROM sales_unnormalized_2
+2026-11-18 12:06:41.160329	Query	SELECT COUNT(*) AS total_reports FROM reports
+2026-11-18 12:06:41.164136	Query	SELECT COUNT(*) AS total_customers FROM customers
+2026-11-18 12:06:41.166587	Query	SELECT COUNT(*) AS total_products FROM products
+2026-11-18 12:06:41.173927	Query	SELECT SUM(price * quantity) AS total_before FROM sales_unnormalized_2
+2026-11-18 12:06:42.050829	Query	SELECT SUM(p.price * ri.quantity) AS total_after\nFROM report_items ri\nJOIN products p ON ri.product_id = p.product_id
+2026-11-18 12:06:49.838085	Query	SELECT c.customer_name, SUM(p.price * ri.quantity) AS total_spent\nFROM customers c\nJOIN reports r ON c.customer_id = r.customer_id\nJOIN report_items ri ON r.report_id = ri.report_id\nJOIN products p ON ri.product_id = p.product_id\nWHERE c.customer_id = 12\nGROUP BY c.customer_name
+2026-11-18 12:08:07.502653	Query	/*!40100 SET @@SQL_MODE='' */
+2026-11-18 12:08:07.502834	Query	/*!40103 SET TIME_ZONE='+00:00' */
+2026-11-18 12:08:07.503016	Query	/*!80000 SET SESSION information_schema_stats_expiry=0 */
+2026-11-18 12:08:07.511831	Query	SELECT LOGFILE_GROUP_NAME, FILE_NAME, TOTAL_EXTENTS, INITIAL_SIZE, ENGINE, EXTRA FROM INFORMATION_SCHEMA.FILES WHERE ENGINE = 'ndbcluster' AND FILE_TYPE = 'UNDO LOG' AND FILE_NAME IS NOT NULL AND LOGFILE_GROUP_NAME IS NOT NULL AND LOGFILE_GROUP_NAME IN (SELECT DISTINCT LOGFILE_GROUP_NAME FROM INFORMATION_SCHEMA.FILES WHERE ENGINE = 'ndbcluster' AND FILE_TYPE = 'DATAFILE' AND TABLESPACE_NAME IN (SELECT DISTINCT TABLESPACE_NAME FROM INFORMATION_SCHEMA.PARTITIONS WHERE TABLE_SCHEMA IN ('sales_norm'))) GROUP BY LOGFILE_GROUP_NAME, FILE_NAME, ENGINE, TOTAL_EXTENTS, INITIAL_SIZE ORDER BY LOGFILE_GROUP_NAME
+2026-11-18 12:08:07.514410	Query	SELECT DISTINCT TABLESPACE_NAME, FILE_NAME, LOGFILE_GROUP_NAME, EXTENT_SIZE, INITIAL_SIZE, ENGINE FROM INFORMATION_SCHEMA.FILES WHERE FILE_TYPE = 'DATAFILE' AND TABLESPACE_NAME IN (SELECT DISTINCT TABLESPACE_NAME FROM INFORMATION_SCHEMA.PARTITIONS WHERE TABLE_SCHEMA IN ('sales_norm')) ORDER BY TABLESPACE_NAME, LOGFILE_GROUP_NAME
+2026-11-18 12:08:07.517069	Query	show tables
+2026-11-18 12:08:07.517777	Query	LOCK TABLES `customers` READ /*!32311 LOCAL */,`my_actions` READ /*!32311 LOCAL */,`products` READ /*!32311 LOCAL */,`report_items` READ /*!32311 LOCAL */,`reports` READ /*!32311 LOCAL */,`sales_unnormalized_2` READ /*!32311 LOCAL */
+2026-11-18 12:08:42.998541	Query	/*!40100 SET @@SQL_MODE='' */
+2026-11-18 12:08:42.998739	Query	/*!40103 SET TIME_ZONE='+00:00' */
+2026-11-18 12:08:42.998910	Query	/*!80000 SET SESSION information_schema_stats_expiry=0 */
+2026-11-18 12:08:43.000376	Query	SELECT LOGFILE_GROUP_NAME, FILE_NAME, TOTAL_EXTENTS, INITIAL_SIZE, ENGINE, EXTRA FROM INFORMATION_SCHEMA.FILES WHERE ENGINE = 'ndbcluster' AND FILE_TYPE = 'UNDO LOG' AND FILE_NAME IS NOT NULL AND LOGFILE_GROUP_NAME IS NOT NULL AND LOGFILE_GROUP_NAME IN (SELECT DISTINCT LOGFILE_GROUP_NAME FROM INFORMATION_SCHEMA.FILES WHERE ENGINE = 'ndbcluster' AND FILE_TYPE = 'DATAFILE' AND TABLESPACE_NAME IN (SELECT DISTINCT TABLESPACE_NAME FROM INFORMATION_SCHEMA.PARTITIONS WHERE TABLE_SCHEMA IN ('sales_norm'))) GROUP BY LOGFILE_GROUP_NAME, FILE_NAME, ENGINE, TOTAL_EXTENTS, INITIAL_SIZE ORDER BY LOGFILE_GROUP_NAME
+2026-11-18 12:08:43.001805	Query	SELECT DISTINCT TABLESPACE_NAME, FILE_NAME, LOGFILE_GROUP_NAME, EXTENT_SIZE, INITIAL_SIZE, ENGINE FROM INFORMATION_SCHEMA.FILES WHERE FILE_TYPE = 'DATAFILE' AND TABLESPACE_NAME IN (SELECT DISTINCT TABLESPACE_NAME FROM INFORMATION_SCHEMA.PARTITIONS WHERE TABLE_SCHEMA IN ('sales_norm')) ORDER BY TABLESPACE_NAME, LOGFILE_GROUP_NAME
+2026-11-18 12:08:43.004612	Query	show tables
+2026-11-18 12:08:43.005383	Query	show table status like 'customers'
+2026-11-18 12:08:43.006452	Query	show create table `customers`
+2026-11-18 12:08:43.006921	Query	show fields from `customers`
+2026-11-18 12:08:43.008144	Query	show fields from `customers`
+2026-11-18 12:08:43.008805	Query	SELECT /*!40001 SQL_NO_CACHE */ * FROM `customers`
+2026-11-18 12:08:43.009222	Query	use `sales_norm`
+2026-11-18 12:08:43.009527	Query	select @@collation_database
+2026-11-18 12:08:43.011748	Query	SELECT COLUMN_NAME,                       JSON_EXTRACT(HISTOGRAM, '$."number-of-buckets-specified"')                FROM information_schema.COLUMN_STATISTICS                WHERE SCHEMA_NAME = 'sales_norm' AND TABLE_NAME = 'customers'
+2026-11-18 12:08:43.012604	Query	show table status like 'my\\_actions'
+2026-11-18 12:08:43.013762	Query	show create table `my_actions`
+2026-11-18 12:08:43.015576	Query	use `sales_norm`
+2026-11-18 12:08:43.015907	Query	select @@collation_database
+2026-11-18 12:08:43.017141	Query	SELECT COLUMN_NAME,                       JSON_EXTRACT(HISTOGRAM, '$."number-of-buckets-specified"')                FROM information_schema.COLUMN_STATISTICS                WHERE SCHEMA_NAME = 'sales_norm' AND TABLE_NAME = 'my_actions'
+2026-11-18 12:08:43.017615	Query	show table status like 'products'
+2026-11-18 12:08:43.018930	Query	show create table `products`
+2026-11-18 12:08:43.019399	Query	show fields from `products`
+2026-11-18 12:08:43.020026	Query	show fields from `products`
+2026-11-18 12:08:43.020650	Query	SELECT /*!40001 SQL_NO_CACHE */ * FROM `products`
+2026-11-18 12:08:43.021152	Query	use `sales_norm`
+2026-11-18 12:08:43.021438	Query	select @@collation_database
+2026-11-18 12:08:43.022870	Query	SELECT COLUMN_NAME,                       JSON_EXTRACT(HISTOGRAM, '$."number-of-buckets-specified"')                FROM information_schema.COLUMN_STATISTICS                WHERE SCHEMA_NAME = 'sales_norm' AND TABLE_NAME = 'products'
+2026-11-18 12:08:43.023590	Query	show table status like 'report\\_items'
+2026-11-18 12:08:43.024752	Query	show create table `report_items`
+2026-11-18 12:08:43.025704	Query	show fields from `report_items`
+2026-11-18 12:08:43.026711	Query	show fields from `report_items`
+2026-11-18 12:08:43.027525	Query	SELECT /*!40001 SQL_NO_CACHE */ * FROM `report_items`
+2026-11-18 12:08:43.028016	Query	use `sales_norm`
+2026-11-18 12:08:43.028224	Query	select @@collation_database
+2026-11-18 12:08:43.029476	Query	SELECT COLUMN_NAME,                       JSON_EXTRACT(HISTOGRAM, '$."number-of-buckets-specified"')                FROM information_schema.COLUMN_STATISTICS                WHERE SCHEMA_NAME = 'sales_norm' AND TABLE_NAME = 'report_items'
+2026-11-18 12:08:43.029914	Query	show table status like 'reports'
+2026-11-18 12:08:43.030929	Query	show create table `reports`
+2026-11-18 12:08:43.031373	Query	show fields from `reports`
+2026-11-18 12:08:43.032047	Query	show fields from `reports`
+2026-11-18 12:08:43.032710	Query	SELECT /*!40001 SQL_NO_CACHE */ * FROM `reports`
+2026-11-18 12:08:43.033129	Query	use `sales_norm`
+2026-11-18 12:08:43.033255	Query	select @@collation_database
+2026-11-18 12:08:43.034509	Query	SELECT COLUMN_NAME,                       JSON_EXTRACT(HISTOGRAM, '$."number-of-buckets-specified"')                FROM information_schema.COLUMN_STATISTICS                WHERE SCHEMA_NAME = 'sales_norm' AND TABLE_NAME = 'reports'
+2026-11-18 12:08:43.035016	Query	show table status like 'sales\\_unnormalized\\_2'
+2026-11-18 12:08:43.036101	Query	show create table `sales_unnormalized_2`
+2026-11-18 12:08:43.036543	Query	show fields from `sales_unnormalized_2`
+2026-11-18 12:08:43.037266	Query	show fields from `sales_unnormalized_2`
+2026-11-18 12:08:43.037933	Query	SELECT /*!40001 SQL_NO_CACHE */ * FROM `sales_unnormalized_2`
+2026-11-18 12:08:43.038321	Query	use `sales_norm`
+2026-11-18 12:08:43.038487	Query	select @@collation_database
+2026-11-18 12:08:43.039615	Query	SELECT COLUMN_NAME,                       JSON_EXTRACT(HISTOGRAM, '$."number-of-buckets-specified"')                FROM information_schema.COLUMN_STATISTICS                WHERE SCHEMA_NAME = 'sales_norm' AND TABLE_NAME = 'sales_unnormalized_2'
+2026-11-18 12:08:43.039964	Query	show tables
+2026-11-18 12:08:43.041116	Query	SELECT CHECK_OPTION, DEFINER, SECURITY_TYPE,        CHARACTER_SET_CLIENT, COLLATION_CONNECTION FROM information_schema.views WHERE table_name='my_actions' AND table_schema='sales_norm'
+2026-11-18 12:09:27.462707	Query	select @@version_comment limit 1
+2026-11-18 12:09:27.462999	Query	SELECT * FROM sales_norm.my_actions ORDER BY event_time
